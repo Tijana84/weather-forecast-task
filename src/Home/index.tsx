@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { API } from "../utils/api";
 
 type WeatherData = {
@@ -10,18 +9,35 @@ type WeatherData = {
 };
 
 export const Home = () => {
-  const navigate = useNavigate();
   const [weatheData, setWeatherData] = useState<WeatherData>({
     city: "",
     temp: 0,
     maxTemp: 0,
     minTemp: 0,
   });
+  const [coords, setCoords] = useState<Partial<GeolocationCoordinates>>({
+    latitude: 0,
+    longitude: 0,
+  })
+
+  useEffect(()=>{
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        return navigator.geolocation.getCurrentPosition((position) => {
+          setCoords(position.coords)
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    };
+
+    getLocation()
+  },[]) 
 
   useEffect(() => {
     const getWeatherData = async () => {
       const response = await API.get(
-        "/weather?q=kraljevo&appid=da019a5dac7d5e904feb04b3e197c9b6&units=metric"
+        `/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=da019a5dac7d5e904feb04b3e197c9b6&units=metric`
       );
 
       setWeatherData({
@@ -33,15 +49,11 @@ export const Home = () => {
     };
 
     getWeatherData();
-  }, []);
+  }, [coords]);
 
-  const handleSearch = () => {
-    navigate("/search");
-  };
-  
   return (
     <div className="flex flex-col justify-center items-center md:w-full h-screen bg-blue-500">
-      <div className="text-2xl font-bold mb-4" onClick={handleSearch}>
+      <div className="text-2xl font-bold mb-4">
         {weatheData.city}
       </div>
       <div className="flex items-center justify-center mb-8">
